@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>座位表生成工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", sans-serif;
+        }
+        body {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+            background: #f5f7fa;
+        }
+        .title {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .tool-box {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .config-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .input-group {
+            flex: 1;
+            min-width: 150px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background: #409eff;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover {
+            background: #337ecc;
+        }
+        button.danger {
+            background: #f56c6c;
+        }
+        button.danger:hover {
+            background: #d9534f;
+        }
+        .seat-container {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .seat {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #e1f5fe;
+            border: 2px solid #b3e5fc;
+            border-radius: 8px;
+            font-weight: bold;
+            color: #333;
+            font-size: 15px;
+            text-align: center;
+            padding: 5px;
+        }
+        .empty-seat {
+            background: #f5f5f5;
+            border-color: #eee;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">座位表生成小工具</h1>
+
+    <!-- 配置区 -->
+    <div class="tool-box">
+        <div class="config-row">
+            <div class="input-group">
+                <label>行数</label>
+                <input type="number" id="rows" value="4" min="1">
+            </div>
+            <div class="input-group">
+                <label>列数</label>
+                <input type="number" id="cols" value="6" min="1">
+            </div>
+        </div>
+
+        <div class="input-group">
+            <label>学生名单（一行一个名字）</label>
+            <textarea id="studentList" placeholder="例如：
+张三
+李四
+王五
+小明"></textarea>
+        </div>
+
+        <div class="btn-group">
+            <button onclick="generateSeats()">生成座位表</button>
+            <button onclick="randomSeats()">随机打乱</button>
+            <button class="danger" onclick="clearAll()">清空重置</button>
+        </div>
+    </div>
+
+    <!-- 座位表展示区 -->
+    <div id="seatContainer" class="seat-container"></div>
+
+    <script>
+        // 全局学生数组
+        let students = [];
+
+        // 生成座位表
+        function generateSeats() {
+            const rows = parseInt(document.getElementById('rows').value);
+            const cols = parseInt(document.getElementById('cols').value);
+            const container = document.getElementById('seatContainer');
+            
+            // 获取学生名单
+            const text = document.getElementById('studentList').value.trim();
+            students = text ? text.split('\n').map(name => name.trim()).filter(name => name) : [];
+            
+            // 设置网格布局
+            container.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
+            container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            
+            // 清空旧座位
+            container.innerHTML = '';
+            
+            // 生成座位
+            let index = 0;
+            for (let i = 0; i < rows * cols; i++) {
+                const seat = document.createElement('div');
+                seat.className = 'seat';
+                
+                if (index < students.length) {
+                    seat.innerText = students[index++];
+                } else {
+                    seat.innerText = '空座';
+                    seat.classList.add('empty-seat');
+                }
+                
+                container.appendChild(seat);
+            }
+        }
+
+        // 随机打乱座位
+        function randomSeats() {
+            if (students.length === 0) {
+                alert('请先输入学生名单并生成座位表！');
+                return;
+            }
+            
+            // 洗牌算法
+            for (let i = students.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [students[i], students[j]] = [students[j], students[i]];
+            }
+            
+            // 重新渲染
+            const seats = document.querySelectorAll('.seat');
+            let index = 0;
+            seats.forEach(seat => {
+                if (index < students.length) {
+                    seat.innerText = students[index++];
+                    seat.classList.remove('empty-seat');
+                } else {
+                    seat.innerText = '空座';
+                    seat.classList.add('empty-seat');
+                }
+            });
+        }
+
+        // 清空重置
+        function clearAll() {
+            document.getElementById('studentList').value = '';
+            document.getElementById('seatContainer').innerHTML = '';
+            students = [];
+        }
+    </script>
+</body>
+</html>
